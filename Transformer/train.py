@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from data import load_data, PAD_TOKEN, SOS_TOKEN, EOS_TOKEN
 from modules.transformer import Transformer
+from models.model import Transformer
 
 import sacrebleu
 from utils import greedy_search, WarmupScheduler
@@ -20,8 +21,7 @@ tokenizer, train_dataloader, valid_dataloader = load_data(
 )
 
 model = Transformer(
-    src_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
-    tgt_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
+    pad_idx=tokenizer.token_to_id(PAD_TOKEN),
     vocab_size=tokenizer.get_vocab_size(),
     max_len=config.max_len,
     d_model=config.d_model,
@@ -64,9 +64,8 @@ def train(epoch, model, criterion, optimizer, scheduler):
         outputs = model(src, tgt)
 
         outputs = outputs.contiguous().view(-1, tokenizer.get_vocab_size())
-        gt = gt.contiguous().view(-1)
 
-        loss = criterion(outputs, gt) / config.accumulate_grad_batches
+        loss = criterion(outputs, gt.contiguous().view(-1)) / config.accumulate_grad_batches
 
         loss.backward()
 
@@ -94,32 +93,31 @@ def evaluate(model, criterion):
     all_gt = []
     all_predictions = []
 
-    for batch in tqdm(valid_dataloader, decs="Evaluating"):
+    for batch in tqdm(valid_dataloader, desc="Evaluating"):
         src, tgt, gt = split_batch(batch)
 
         enc_output = model.encode(src)
-        
         src_mask = model.make_src_mask(src)
-
         dec_output = model.decode(tgt, enc_output, src_mask)
 
-        dec_output = dec_output.contiguous().view(-1, tokenizer.get_vocab_size())
-        gt = gt.contiguous().view(-1)
-
-        # teacher forcing，算 loss，同训练
-        loss = criterion(dec_output, gt) / config.accumulate_grad_batches
-
+        loss = (
+                criterion(
+                    dec_output.contiguous().view(-1, tokenizer.get_vocab_size()),
+                    gt.contiguous().view(-1),
+                )
+                / config.accumulate_grad_batches
+        )
         total_loss += loss.item()
 
-        # 贪心，算 bleu，同推理，做翻译
         pred_tokens = greedy_search(
             model, enc_output, src_mask, config.max_len, sos_idx, eos_idx, pad_idx
         )
+
         pred_sentence = tokenizer.decode_batch(pred_tokens.cpu().numpy())
         gt_sentence = tokenizer.decode_batch(gt.cpu().numpy())
 
         all_predictions.append("".join(pred_sentence))
-        all_gt.append("".join(gt_sentence))
+        all_gt.append(["".join(gt_sentence)])
 
     avg_loss = total_loss / len(valid_dataloader)
 
@@ -144,7 +142,7 @@ def training_loop(restore_epoch = 0):
     )
     scheduler = WarmupScheduler(optimizer, config.d_model, config.warmup_step)
     criterion = nn.CrossEntropyLoss(
-        ignore_index=tokenizer.token_to_id(PAD_TOKEN), 
+        ignore_index=tokenizer.token_to_id(PAD_TOKEN),
         label_smoothing=config.eps_ls
     )
 
@@ -160,6 +158,7 @@ def training_loop(restore_epoch = 0):
     else:
         restore_epoch = 0
 
+    best_bleu = 0
     for epoch in range(restore_epoch, config.epochs):
         avg_train_loss = train(epoch, model, criterion, optimizer, scheduler)
         avg_valid_loss, avg_bleu = evaluate(model, criterion)
@@ -167,7 +166,10 @@ def training_loop(restore_epoch = 0):
             f"Epoch {epoch + 1}/{config.epochs}, Training Loss: {avg_train_loss: .4f}, Validation Loss: {avg_valid_loss:.4f}, BLEU Score: {avg_bleu:.2f}"
         )
 
-        checkpoint_path = config.checkpoint_dir / f"en_de_{epoch + 1}.pth"
+        checkpoint_path = config.checkpoint_dir / "en_de_.pth"
+
+        # if avg_bleu > best_bleu:
+        #     best_bleu = avg_bleu
         torch.save(
             {
                 "epoch": epoch + 1,
@@ -177,3 +179,6 @@ def training_loop(restore_epoch = 0):
             },
             checkpoint_path,
         )
+
+if __name__ == '__main__':
+    training_loop(-1)

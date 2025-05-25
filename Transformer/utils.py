@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torch.optim.optimizer import Optimizer
 
 from typing import Sequence, Union
 import config
@@ -10,20 +11,20 @@ from tokenizers import Tokenizer
 
 class WarmupScheduler(torch.optim.lr_scheduler.LRScheduler):
     def __init__(
-            self,
-            optimizer,
-            hidden_size,
-            warmup_step,
-            last_epoch = -1
-    ):
+        self,
+        optimizer: Optimizer,
+        hidden_size: int,
+        warmup_step: int,
+        last_epoch: int = -1,
+    ) -> None:
         self.hidden_size = hidden_size
         self.warmup_step = warmup_step
-        super().__init__(optimizer, last_epoch)
-    
+        super(WarmupScheduler, self).__init__(optimizer, last_epoch)
+
     def get_lr(self):
         return [
             self.hidden_size**-0.5
-            *min(
+            * min(
                 (self.last_epoch + 1) ** -0.5,
                 (self.last_epoch + 1) * self.warmup_step**-1.5,
             )
@@ -40,7 +41,7 @@ def greedy_search(model, enc_output, src_mask, max_len, sos_idx, eos_idx, pad_id
 
     # 解码器最初的输入，开始 token
     # sos: [bs, 1]
-    sos = torch.ones(batch_size, 1, dtype=torch.long, device=device).fill_(
+    ys = torch.ones(batch_size, 1, dtype=torch.long, device=device).fill_(
         sos_idx
     )
     # 记录 batch 里的某句话是否翻译结束了，首次预测为 eos 则意味着结束翻译，后续补0
@@ -50,13 +51,13 @@ def greedy_search(model, enc_output, src_mask, max_len, sos_idx, eos_idx, pad_id
         # dec_output: [bs, seq_len - 1, vocab_size]
         # 只要每 decoder 输出的最后一个 token
         # logits: [bs, vocab_size]
-        logits = model.decode(sos, enc_output, src_mask)[:, -1]
+        logits = model.decode(ys, enc_output, src_mask)[:, -1]
 
         # next_words: [bs]
         next_words = torch.argmax(logits, dim=1)
 
         # sos: [bs, 2]
-        sos = torch.cat([sos, next_words.unsqueeze(1)], dim=1)
+        ys = torch.cat([ys, next_words.unsqueeze(1)], dim=1)
         
         # 如果下一个词第一次出现 eos，这句话已经翻译结束，意味着如果后续还预测为其他，做 padding 处理
         ended = ended | (next_words == eos_idx)
@@ -68,21 +69,21 @@ def greedy_search(model, enc_output, src_mask, max_len, sos_idx, eos_idx, pad_id
         <start> hide new secretions from the parental units <extract>
         <start> goes to absurd lengths <extract> <pad> <pad> <pad>
         '''
-        sos[ended & (sos[:, -1] != eos_idx), -1] = pad_idx
+        ys[ended & (ys[:, -1] != eos_idx), -1] = pad_idx
 
         # 如果每句话都输出过 eos，停止循环
         if ended.all():
             break
     
     # 如果 batch 里有句话一直没预测为 eos，且到了长度上限，则让那句没结束的话结束，已经结束的继续补 0
-    if i == max_len - 2:
-        sos[~ended, -1] = eos_idx
-        sos[ended, -1] = pad_idx
+    if i == max_len - 2:  # reach max length
+        ys[~ended, -1] = eos_idx
+        ys[ended, -1] = pad_idx
 
     # 注意输出是包含初始的特殊 token sos，但不影响 bleu 分数的计算，因为用了 tokenizer.decode_batch
     # 去掉了特殊词元，只留下了文本部分（写法上是否再维护一个变量 pred_tokens 更好？无所谓，因为只用来计算 bleu
 
-    return sos
+    return ys
 
 
 @torch.no_grad
@@ -176,7 +177,8 @@ def sample(
 def translate_sentence(
         sentences: Union[Sequence[str], str], 
         model: Transformer, 
-        tokenizer: Tokenizer, 
+        src_tokenizer: Tokenizer,
+        tgt_tokenizer: Tokenizer,
         max_len=config.max_len, 
         do_sample=False, 
         temperature=None, 
@@ -192,16 +194,16 @@ def translate_sentence(
 
     device = next(model.parameters()).device
 
-    sos_idx = tokenizer.token_to_id(data.SOS_TOKEN)
-    eos_idx = tokenizer.token_to_id(data.EOS_TOKEN)
-    pad_idx = tokenizer.token_to_id(data.PAD_TOKEN)
+    sos_idx = tgt_tokenizer.token_to_id(data.SOS_TOKEN)
+    eos_idx = tgt_tokenizer.token_to_id(data.EOS_TOKEN)
+    pad_idx = tgt_tokenizer.token_to_id(data.PAD_TOKEN)
 
     src_tensor = torch.LongTensor(
-        [encoding.ids for encoding in tokenizer.encode_batch(sentences)]
+        [encoding.ids for encoding in src_tokenizer.encode_batch(sentences)]
     ).to(device)
 
     enc_output = model.encode(src_tensor)
-    src_mask = make_pad_mask(src_tensor, tokenizer.token_to_id(data.PAD_TOKEN))
+    src_mask = make_pad_mask(src_tensor, src_tokenizer.token_to_id(data.PAD_TOKEN))
 
     if do_sample == False:
         tgt_tokens = greedy_search(
@@ -216,7 +218,7 @@ def translate_sentence(
             model, enc_output, src_mask, temperature, top_k, top_p, max_len, sos_idx, eos_idx, pad_idx
         )
 
-    return ["".join(s) for s in tokenizer.decode_batch(tgt_tokens.cpu().numpy())]
+    return ["".join(s) for s in tgt_tokenizer.decode_batch(tgt_tokens.cpu().numpy())]
 
 
 

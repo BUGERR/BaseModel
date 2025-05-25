@@ -3,11 +3,14 @@ import config
 
 from data import load_data, PAD_TOKEN
 from modules.transformer import Transformer
+from models.model import Transformer
 from utils import translate_sentence
 import sacrebleu
 
+from altair_heatmap import viz_encoder_self, viz_decoder_self, viz_decoder_src
+
 # settings
-restore_epoch = 20
+restore_epoch = 4
 num_sample = 5
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -20,8 +23,7 @@ tokenizer, test_loader = load_data(src_lang, tgt_lang, ["test"])
 test_dataset = test_loader.dataset
 
 model = Transformer(
-    src_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
-    tgt_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
+    pad_idx=tokenizer.token_to_id(PAD_TOKEN),
     vocab_size=tokenizer.get_vocab_size(),
     max_len=config.max_len,
     d_model=config.d_model,
@@ -31,15 +33,16 @@ model = Transformer(
     p_dropout=config.p_dropout
 ).to(device)
 
+
 # load model
-state_dict = torch.load(config.checkpoint_dir / f"en_de_{restore_epoch}.pth")
+state_dict = torch.load(config.checkpoint_dir / "en_de_.pth")
 model.load_state_dict(state_dict["model"])
 
 # sample data
-samples = test_dataset[torch.randint(0, len(test_dataset, (num_sample,)))]
+samples = test_dataset[torch.randint(0, len(test_dataset), (num_sample,))]
 
 method = {
-    "greedy-search": {"do_sample: False"}, 
+    "greedy-search": {"do_sample": False, },
     "sample": {
         "do_sample": True, 
         "top_k": config.top_k, 
@@ -50,7 +53,7 @@ method = {
 
 pred = {
     method_name: translate_sentence(
-        samples[src_lang], model, tokenizer, **args
+        samples[src_lang], model, tokenizer, tokenizer, **args
     )
     for method_name, args in method.items()
 }
@@ -75,3 +78,19 @@ for i in range(num_sample):
 # Print BLEU scores
 for method_name, score in bleu_scores.items():
     print(f"\033[1mBLEU score for {method_name}\033[0m: {score:.2f}")
+
+
+
+# attn_vis
+src_tokens = samples[src_lang][1]
+src_tokens = tokenizer.encode(src_tokens).tokens
+print(src_tokens)
+
+tgt_tokens = pred["greedy-search"][1]
+tgt_tokens = tokenizer.encode(tgt_tokens).tokens
+print(tgt_tokens)
+viz_encoder_self(model, src_tokens).save('attention_vis/enc_self_attn.html')
+
+viz_decoder_self(model, tgt_tokens).save('attention_vis/dec_self_attn.html')
+
+viz_decoder_src(model, tgt_tokens, src_tokens).save('attention_vis/dec_enc_attn.html')

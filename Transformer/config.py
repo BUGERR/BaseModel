@@ -9,7 +9,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(
 torch.manual_seed(3407)
 
 # model parameter setting (Transformer base)
-max_len = 512
+max_len = 64
 d_model = 512
 d_hidden = 2048
 n_head = 8
@@ -36,8 +36,6 @@ dataset_dir = base_dir / "datasets" / "multi30k"
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 # inference
-num_beams = 3
 top_k = 30
 top_p = 0.7
 temperature = 1.0
-length_penalty = 0.7
