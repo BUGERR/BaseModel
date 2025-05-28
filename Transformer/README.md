@@ -2,6 +2,7 @@
 - previous error1：evaluate 的 gt 没加 []，导致 bleu 算不了
 
 ``` python
+# 注意两者区别，因为 gt 是 str 句子，要转成 list。而 pred_sentence 本身就是 list。
 all_predictions.append("".join(pred_sentence))
 all_gt.append(["".join(gt_sentence)])
 ```
