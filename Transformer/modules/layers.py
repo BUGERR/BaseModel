@@ -28,7 +28,7 @@ class ScaledDotProductAttention(nn.Module):
         qk = torch.matmul(q, k.transpose(-2, -1)) * scale
 
         if mask is not None:
-            qk.masked_fill(mask.logical_not(), float('inf'))
+            qk.masked_fill_(mask.logical_not(), float('-inf'))
 
         attn_weight = F.softmax(qk, dim=-1)
 
