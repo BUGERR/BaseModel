@@ -18,7 +18,7 @@ all_gt.append(["".join(gt_sentence)])
           tgt = layer(tgt, enc_src, tgt_mask, src_mask)
 ```
 
-- error5：ScaledDotProductAttention 里 mask 注意是 -inf，之前没加负号
+- error5：ScaledDotProductAttention 里 mask 注意是 -inf，之前没加负号，用 @ 和 matmul 好像有点区别
 
 ``` python
 batch_size, num_attention_heads, seq_len, d_key = k.size()
