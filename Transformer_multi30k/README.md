@@ -1,7 +1,8 @@
 ## 实验设置
 - 英语德语共享词典
 - 原文 embedding 出来没加 ln，泛化性好。加 ln，训练更稳定
-- models 和 modules 在模型结构上无差别，但性能有差异，困惑
+- models 和 modules 在模型结构上无差别，但性能有差异，困惑（models 性能更好，可能是 attention 写法不同）
+- src 和 tgt 没必要 pad 到一样长，对性能无影响
 - batchsize = 32，accumulate = 16
 - epoch = 20
 - warmup_epoch = 10
