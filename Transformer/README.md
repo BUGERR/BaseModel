@@ -1,0 +1,4 @@
+- 早期实验，检验模型代码是否正确（还是不要重复造轮子，自己写的容易错）
+- previous error1：train 的 gt 没加 []
+- previous error2：decoder 的 enc_dec_attention 没定义，和 tgt_self_attention 用重了
+- previous error3：Transformer 的 src_embedding 和 tgt_embedding 初始化了，但后续忘了用
