@@ -17,9 +17,10 @@ self.src_emb.tok_emb.weight = self.tgt_emb.tok_emb.weight
 - 这里 src_emb 的权重是被赋予的，而不是自己学的，我猜测这种赋值方式不会让 encoder 学到源语言的语义特征
 
 ## scheduler
-- d_model 不变的情况下，学习率峰值由 warmup_step 决定
-- 增加 warmup，峰值减小，学习率增长缓慢，可能学不动
-- 减小 warmup，峰值增加，lr 增长陡峭，可能学很烂
+- d_model 不变的情况下（图中橙红线），学习率峰值由 warmup_step 决定
+- warmup_step = warmup_epoch * (907 / (accumulate_grad_batches))
+- 增加 warmup_step，峰值减小，学习率增长缓慢，可能学不动。（谨慎减小 accumulate_grad_batches）
+- 减小 warmup_step，峰值增加，lr 增长陡峭，可能学很烂。（谨慎减小 warmup_epoch，增大 accumulate_grad_batches）
 
 <div style="text-align: center;">
   <img src="./images/visualization.png" alt="visualization" style="width: auto; height: auto;">
