@@ -8,3 +8,18 @@
 - 如果用了梯度累积，epoch 也要翻相应倍。
 - 例如：训练集 206112，batch_size = 32，因此一个 epoch 更新 6441 次。如果加上梯度累积，为了模拟大 batch，每 16 个 batch 更新一次参数，则一个 epoch 更新 6441 // 16 = 402 次，要相应延长训练时间
 - 但其实后面已经过拟合了，因此不加 epoch 也无所谓
+
+### bleu
+<div style="text-align: center;">
+  <img src="./images/bleu.png" alt="bleu" style="width: auto; height: auto;">
+</div>
+
+### ppl
+<div style="text-align: center;">
+  <img src="./images/ppl.png" alt="ppl" style="width: auto; height: auto;">
+</div>
+
+### lr
+<div style="text-align: center;">
+  <img src="./images/lr.png" alt="lr" style="width: auto; height: auto;">
+</div>
