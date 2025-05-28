@@ -8,8 +8,8 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
 from data import load_data, PAD_TOKEN, SOS_TOKEN, EOS_TOKEN
-# from models.model import Transformer_my
-from modules import Transformer # 56,287,232
+from models.model import Transformer_my
+# from modules import Transformer # 56,287,232
 
 import sacrebleu
 from utils import greedy_search, WarmupScheduler
@@ -26,29 +26,17 @@ tokenizer, train_dataloader, valid_dataloader = load_data(
 )
 
 
-# model = Transformer_my(
-#     pad_idx=tokenizer.token_to_id(PAD_TOKEN),
-#     vocab_size=tokenizer.get_vocab_size(),
-#     max_len=config.max_len,
-#     d_model=config.d_model,
-#     d_hidden=config.d_hidden,
-#     n_head=config.n_head,
-#     n_layer=config.n_layer,
-#     p_dropout=config.p_dropout
-# ).to(device)
-
-model = Transformer(
-    src_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
-    tgt_pad_idx=tokenizer.token_to_id(PAD_TOKEN),
-    src_vocab_size=tokenizer.get_vocab_size(),
-    tgt_vocab_size=tokenizer.get_vocab_size(),
+model = Transformer_my(
+    pad_idx=tokenizer.token_to_id(PAD_TOKEN),
+    vocab_size=tokenizer.get_vocab_size(),
     max_len=config.max_len,
-    hidden_size=config.d_model,
-    ffn_hidden=config.d_hidden,
-    num_attention_heads=config.n_head,
-    num_hidden_layers=config.n_layer,
-    dropout=config.p_dropout
+    d_model=config.d_model,
+    d_hidden=config.d_hidden,
+    n_head=config.n_head,
+    n_layer=config.n_layer,
+    p_dropout=config.p_dropout
 ).to(device)
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
