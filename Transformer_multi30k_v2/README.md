@@ -10,6 +10,7 @@
 - 如果是分别定义 src_emb 和 tgt_emb，然后通过赋值来 weight tying，可能会导致有问题，不等价于共用 emb。
 
 ``` python
+# 错误示例
 self.linear.weight = self.emb.tok_emb.weight
 self.src_emb.tok_emb.weight = self.tgt_emb.tok_emb.weight
 ```
