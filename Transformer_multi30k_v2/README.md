@@ -4,6 +4,7 @@
 - batchsize = 32，accumulate = 8
 - epoch = 19
 - warmup_epoch = 10
+- 再减小 accumulate_grad_batches 会增 ppl
 
 
 ### bleu
