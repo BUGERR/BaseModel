@@ -6,6 +6,15 @@
 - warmup_epoch = 10
 - 再减小 accumulate_grad_batches 会增 ppl
 
+## 注意
+- 如果是分别定义 src_emb 和 tgt_emb，然后通过赋值来 weight tying，可能会导致有问题，不等价于共用 emb。
+
+``` python
+self.linear.weight = self.emb.tok_emb.weight
+self.src_emb.tok_emb.weight = self.tgt_emb.tok_emb.weight
+```
+- 这里 src_emb 的权重是被赋予的，而不是自己学的，我猜测这种赋值方式不会让 encoder 学到源语言的语义特征
+
 
 ### bleu
 <div style="text-align: center;">
