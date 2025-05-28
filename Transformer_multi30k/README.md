@@ -1,3 +1,6 @@
+- 关于原文模型实现细节的一些小实验，基本一比一复刻原文。
+- 例如：token embedding 乘了根号 d；共享了 encoder decoder embedding 权重。
+
 ## 实验设置
 - 英语德语共享词典
 - 原文 embedding 出来没加 ln，泛化性好。加 ln，训练更稳定
