@@ -19,6 +19,7 @@
 </div>
 
 ### inference
+- sample1 的翻译效果很炸裂
 <div style="text-align: center;">
   <img src="./images/infer.png" alt="infer" style="width: auto; height: auto;">
 </div>
