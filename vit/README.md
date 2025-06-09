@@ -41,7 +41,5 @@ ViT 提供多种变体，如不同 patch 大小的 ViT-B/16、ViT-B/32，以及�
 ### How to Download Pretrained ViT?  
 运行以下命令下载预训练的 ViT 模型：  
 ```bash  
-pip install -U huggingface-cli  
-export HF_ENDPOINT=https://hf-mirror.com  
-huggingface-cli download google/vit-base-patch16-224 --local-dir path/to/pretrained_dir  
+pip install huggingface_hub[hf_xet]  
 ``` 
