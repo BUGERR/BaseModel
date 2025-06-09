@@ -31,7 +31,7 @@ ViT 更接近 BERT，二者都使用 Transformer Encoder 提取特征，因此�
 ## Pre-training  
 ViT 提供多种变体，如不同 patch 大小的 ViT-B/16、ViT-B/32，以及不同模型规模的 ViT-B、ViT-L、ViT-H。这些模型在 ImageNet1k、ImageNet21k 和 JFT-300M 数据集上进行预训练，优化器采用 Adam，batch size 为 4096，warmup 步数为 10k，图像分辨率为 224。更多细节请参考原论文附录 B。
 
-## [Fine-tuning](./finetune.ipynb)  
+## [Fine-tuning](./finetune.py)  
 在 ImageNet1k、ImageNet21k 和 JFT-300M 上预训练后，作者还在 CIFAR10、CIFAR100、Oxford-IIIT-Pets 等数据集上进行了微调。为了简化，本项目在 CIFAR10 上进行了微调。
 
 根据论文 B.1.1 设置，使用 SGD 优化器，momentum 为 0.9，gradient clipping norm 为 1，不使用 weight decay，图像分辨率设为 384。首先使用训练集的 2% 作为验证集，在 `[0.001, 0.003, 0.01, 0.03]` 范围内扫描学习率，并选择最佳值。然后，在整个训练集上使用该学习率进行 7 轮训练。需要注意的是，分类器使用的是零初始化的矩阵，而非带有偏置的线性层。
