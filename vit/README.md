@@ -1,4 +1,3 @@
-[📖 English ReadMe](./README.md)  
 ## Introduction  
 在本项目中，我展示了如何将 [huggingface](https://huggingface.co/google/vit-base-patch16-224) 上的官方预训练权重加载到 Vision Transformer (ViT) 模型中，并在 CIFAR10 数据集上进行微调，复现原始论文 [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/pdf/2010.11929) 中的实验效果。请注意，我没有实现完整的训练过程，虽然预训练和微调设置有所不同，但由于 ImageNet 和 JFT-300M 数据集规模过大，难以完全复现。
 
