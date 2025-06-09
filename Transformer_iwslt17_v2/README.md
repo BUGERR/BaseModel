@@ -23,3 +23,6 @@
 <div style="text-align: center;">
   <img src="./images/lr.png" alt="lr" style="width: auto; height: auto;">
 </div>
+
+- BLEU score for greedy-search: 8.91
+- BLEU score for sample: 9.43
