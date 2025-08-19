@@ -7,7 +7,7 @@
 - 再减小 accumulate_grad_batches 会增 ppl
 
 ## 注意
-- 如果是分别定义 src_emb 和 tgt_emb，然后通过赋值来 weight tying，可能会导致有问题，不等价于共用 emb。
+- 如果两种语言不共享词库，去分别定义 src_emb 和 tgt_emb，然后通过赋值来 weight tying，可能会导致有问题，不等价于共享词典 + 共用 emb。
 
 ``` python
 # 错误示例
